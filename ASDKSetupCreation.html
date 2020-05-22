@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>SBS</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+<nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="index.html">SBS</a>
+    </div>
+    <ul class="nav navbar-nav">
+      <!--<li class="active"><a href="#">Azure Stack</a></li> -->
+	  <li class="dropdown"><a class="dropdown-toggle" data-toggle="dropdown" href="#">Azure Stack <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          <li><a href="ASDKSetupCreation.html">ASDK setup creation</a></li>
+          <li><a href="ASDKConnect.html">Connect to ASDK via VPN</a></li>
+          <li><a href="AzureClientLibrary.html">Azure storage client library for c++</a></li>
+        </ul>
+      </li>
+      <li class="dropdown"><a class="dropdown-toggle" data-toggle="dropdown" href="#">GCC-G++ <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          <li><a href="#">Upgrade/Install GCC-G++ compiler</a></li>
+          <li><a href="#">Page 1-2</a></li>
+          <li><a href="#">Page 1-3</a></li>
+        </ul>
+      </li>
+      <li><a href="#">Page 2</a></li>
+      <li><a href="#">Page 3</a></li>
+    </ul>
+  </div>
+</nav>
+  
+<div class="container">
+  <h2>ASDK setup creation</h2>
+  <pre>Prerequisites:
+https://docs.microsoft.com/en-us/azure-stack/asdk/asdk-deploy-considerations?view=azs-2002
+
+1.	Create/setup base Win2016 VM. With 256 GB RAM and 5 HDDs with 500GB size each.
+
+2.	Download and extract the ASDK
+https://docs.microsoft.com/en-us/azure-stack/asdk/asdk-download?view=azs-2002
+
+-	Download & Run Deployment checker script.
+-	Extract ASDK files to cloudbuilder.vhdx
+3.	 Prepare the ASDK host computer
+https://docs.microsoft.com/en-us/azure-stack/asdk/asdk-prepare-host?view=azs-2002
+4.	 Install the ASDK
+https://docs.microsoft.com/en-us/azure-stack/asdk/asdk-install?view=azs-2002
+5.	Post Deployment config for ASDK:
+https://docs.microsoft.com/en-us/azure-stack/asdk/asdk-post-deploy?view=azs-2002
+6.	Register ASDK :
+https://docs.microsoft.com/en-us/azure-stack/asdk/asdk-register?view=azs-2002
+
+
+ERRORS & Resolutions :
+1.	ERROR:
+[ 07:14:04 ] Checking Hyper-V support on the host...
+[ 07:14:25 ]  -- Hyper-V is not supported on this host. Hardware virtualization is required for Hyper-V. 
+Resolution:
+ 
+2.
+ERROR:
+The server is currently already booted from a virtual hard disk, to boot the server from the CloudBuilder.vhdx you will need to run this script on an Operating System that is installed on the physical disk of this server.
+Resolution :
+
+Open asdk-installer.ps1 & comment following code:
+elseif ((get-disk | Where-Object {$_.isboot -eq $true}).Model -match 'Virtual Disk') {
+        Write-Host "The server is currently already booted from a virtual hard disk, to boot the server from the CloudBuilder.vhdx you will need to run this script on an Operating System that is installed on the physical disk of this server." -ForegroundColor Red
+        Exit
+    }
+
+3.
+TIME SERVER ERROR.
+ERROR:
+Testing time server '208.88.126.235' failed.
+At C:\CloudDeployment\Setup\Common\InstallAzureStackCommon.psm1:412 char:13
++             throw ($LocalizedData.TimeServerFail -f $t)
++             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (Testing time se...26.235' failed.:String) [], RuntimeException
+    + FullyQualifiedErrorId : Testing time server '208.88.126.235' failed.
+
+Resolution:
+Use this Internal Time server IP : 172.16.8.34
+4.
+ERROR:
+[ 08:02:35 ]  -- CPU socket count (2) and core count (12) meet the minimum requirements for ASDK.
+[ 08:02:35 ] Checking Hyper-V support on the host...
+[ 08:02:37 ]  -- Hyper-V is already installed. Note that the installer would enable it otherwise.
+[ 08:02:37 ] Checking domain join status...
+[ 08:02:37 ]  -- The host is not domain joined.
+[ 08:02:37 ] Checking Internet access...
+[ 08:02:41 ]  -- This machine has internet access (we tried to contact https://login.windows.net).
+[ 08:02:41 ] Checking Host OS version...
+[ 08:02:41 ]  -- Host OS version: 10.0.17763, SKU: 8
+[ 08:02:41 ]  -- The host OS version matches the requirements for ASDK (10.0.14393).
+[ 08:02:41 ] Checking NIC status...
+[ 08:02:44 ]  -- NIC configuration passed successfully.
+[ 08:02:44 ] Checking NIC requirements...
+ForEach-Object : Cannot validate argument on parameter 'InstanceId'. The argument is null. Provide a valid value for
+the argument, and then try running the command again.
+At C:\Users\Administrator\Downloads\Deployment-Checker1.ps1:270 char:37
++     Get-NetAdapter -IncludeHidden | ForEach-Object {
++                                     ~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [ForEach-Object], ParameterBindingValidationException
+    + FullyQualifiedErrorId : ParameterArgumentValidationError,Microsoft.PowerShell.Commands.ForEachObjectCommand
+
+
+Copy the command : ( Not required )
+
+$adminpass = ConvertTo-SecureString '●●●●●●●●●●●'-AsPlainText -Force
+cd C:\CloudDeployment\Setup
+.\InstallAzureStackPOC.ps1 -AdminPassword $adminpass -UseADFS -TimeServer 172.16.8.34
+
+5.
+ERROR:
+Invoke-EceAction : Type 'Validate' of Role 'BareMetal' raised an exception:
+One or more validation test failed for Role 'BareMetal' on machine 'WIN-F5VAFFC96C1'
+For detailed test results look at file
+'\\WIN-F5VAFFC96C1\C$\CloudDeployment\Logs\Tests\TestResults_WIN-F5VAFFC96C1_BareMetal_aa3d_2020-05-06-08-44-00.xml'
+Test Failed: Retrieve network adapter information from computer 'WIN-F5VAFFC96C1'.
+Command            Arguments
+
+-------            ---------
+Start-Test         {Parameters=CloudEngine.Configurations.EceInterfaceParameters, Script=System.Collections.Hashtable}
+
+Test-BareMetalRole {Parameters=CloudEngine.Configurations.EceInterfaceParameters, ErrorAction=Stop, Verbose=True}
+
+                   {}
+
+<ScriptBlock>      {CloudEngine.Configurations.EceInterfaceParameters}
+
+<ScriptBlock>      {C:\CloudDeployment\CloudDeployment.psd1, CloudEngine.Configurations.EceInterfaceParameters,
+e6e02...
+at Trace-Error, C:\CloudDeployment\Common\Tracer.psm1: line 66
+at Start-Test, C:\CloudDeployment\Roles\Common\RoleHelpers.psm1: line 1986
+at Test-BareMetalRole, C:\CloudDeployment\Roles\PhysicalMachines\TestPhysicalMachines.psm1: line 94
+at Validate, C:\CloudDeployment\Classes\BareMetal\BareMetal.psm1: line 67
+at <ScriptBlock>, <No file>: line 50
+at <ScriptBlock>, <No file>: line 48
+At C:\CloudDeployment\Setup\Common\DeploySingleNodeCommon.ps1:778 char:5
++     Invoke-EceAction -RolePath $masterRole -ActionType $ActionPlan @d ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (One or more val... e6e02...
+:String) [Invoke-EceAction], InterfaceInvocationFailedException
+    + FullyQualifiedErrorId : One or more validation test failed for Role 'BareMetal' on machine 'WIN-F5VAFFC96C1'
+    For detailed test results look at file '\\WIN-F5VAFFC96C1\C$\CloudDeployment\Logs\Tests\TestResults_WIN-F5VAFFC96C
+   1_BareMetal_aa3d_2020-05-06-08-44-00.xml'
+Test Failed: Retrieve network adapter information from computer 'WIN-F5VAFFC96C1'.
+    Command            Arguments
+
+    -------            ---------
+
+    Start-Test         {Parameters=CloudEngine.Configurations.EceInterfaceParameters, Script=System.Collections.Hashta
+   ble}
+    Test-BareMetalRole {Parameters=CloudEngine.Configurations.EceInterfaceParameters, ErrorAction=Stop, Verbose=True}
+
+                       {}
+
+    <ScriptBlock>      {CloudEngine.Configurations.EceInterfaceParameters}
+
+    <ScriptBlock>      {C:\CloudDeployment\CloudDeployment.psd1, CloudEngine.Configurations.EceInterfaceParameters, e6
+   e02...
+,CloudEngine.Cmdlets.InvokeCmdlet
+
+Invoke-EceAction : Action: Invocation of step 0.PhysicalMachineAndInitialConfiguration.12 failed. Stopping invocation
+of action plan.
+At C:\CloudDeployment\Setup\Common\DeploySingleNodeCommon.ps1:778 char:5
++     Invoke-EceAction -RolePath $masterRole -ActionType $ActionPlan @d ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [Invoke-EceAction], ActionExecutionException
+    + FullyQualifiedErrorId : Unspecified error,CloudEngine.Cmdlets.InvokeCmdlet
+
+Invoke-EceAction : Action: Invocation of step 0.PhysicalMachineAndInitialConfiguration failed. Stopping invocation of
+action plan.
+At C:\CloudDeployment\Setup\Common\DeploySingleNodeCommon.ps1:778 char:5
++     Invoke-EceAction -RolePath $masterRole -ActionType $ActionPlan @d ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [Invoke-EceAction], ActionExecutionException
+    + FullyQualifiedErrorId : Unspecified error,CloudEngine.Cmdlets.InvokeCmdlet
+
+Invoke-EceAction : Action: Invocation of step 0 failed. Stopping invocation of action plan.
+At C:\CloudDeployment\Setup\Common\DeploySingleNodeCommon.ps1:778 char:5
++     Invoke-EceAction -RolePath $masterRole -ActionType $ActionPlan @d ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [Invoke-EceAction], ActionExecutionException
+    + FullyQualifiedErrorId : Unspecified error,CloudEngine.Cmdlets.InvokeCmdlet
+
+RESOLUTION:
+Comment out the call to Test-BareMetalRole in C:\CloudDeployment\Classes\BareMetal\BareMetal.psm1: line 67
+#Test-BareMetalRole -Parameters $Parameters -ErrorAction Stop -Verbose
+
+What does this test do:
+# This function runs the Validate test on the physical machines to verify they have the correct hardware.
+# This function is expected to run only as part of initial deployment of a stamp.
+As it’s a virtual machine it is safe to comment out this test.
+</pre>
+</div>
+
+</body>
+</html>

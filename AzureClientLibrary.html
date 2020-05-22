@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>SBS</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+<nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="index.html">SBS</a>
+    </div>
+    <ul class="nav navbar-nav">
+      <!--<li class="active"><a href="#">Azure Stack</a></li> -->
+	  <li class="dropdown"><a class="dropdown-toggle" data-toggle="dropdown" href="#">Azure Stack <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          <li><a href="ASDKSetupCreation.html">ASDK setup creation</a></li>
+          <li><a href="ASDKConnect.html">Connect to ASDK via VPN</a></li>
+          <li><a href="AzureClientLibrary.html">Azure storage client library for c++</a></li>
+        </ul>
+      </li>
+      <li class="dropdown"><a class="dropdown-toggle" data-toggle="dropdown" href="#">GCC-G++ <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          <li><a href="#">Upgrade/Install GCC-G++ compiler</a></li>
+          <li><a href="#">Page 1-2</a></li>
+          <li><a href="#">Page 1-3</a></li>
+        </ul>
+      </li>
+      <li><a href="#">Page 2</a></li>
+      <li><a href="#">Page 3</a></li>
+    </ul>
+  </div>
+</nav>
+  
+<div class="container">
+  <h3>Azure storage client library for c++ Build process</h3>
+  <pre>
+  #Here are the build instructions:
+#Build following code on RHEL 7.4 machine -
+
+Base_Dir=/home/t2
+
+cd $Base_Dir
+# cmake 3.6.2
+wget https://cmake.org/files/v3.6/cmake-3.6.2.tar.gz
+tar -xvf cmake-3.6.2.tar.gz
+cd cmake-3.6.2
+./configure
+make
+make install
+
+#git
+yum install git
+#make
+yum install make
+#zlib
+yum install zlib-devel
+#openssl
+yum install openssl-devel
+#libuuid
+yum install libuuid-devel
+#libxml2
+yum install libxml2-devel
+#RedHat 7.3
+yum install python-devel
+
+cd $Base_Dir
+## Bootstrap
+wget https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.gz
+tar xvf boost_1_68_0.tar.gz
+cd boost_1_68_0
+./bootstrap.sh
+sudo ./b2 install
+
+cd $Base_Dir
+## Install G++-5.1.0 compiler
+wget https://ftp.gnu.org/gnu/gcc/gcc-5.1.0/gcc-5.1.0.tar.gz
+tar xzf gcc-5.1.0.tar.gz
+cd gcc-5.1.0
+./contrib/download_prerequisites
+cd ..
+mkdir objdir
+cd objdir
+$PWD/../gcc-5.1.0/configure --prefix=$HOME/GCC-5.1.0 --enable-languages=c,c++,fortran,go --disable-multilib
+make
+make install
+
+cd $Base_Dir
+## Build and Install Casablanca Package
+git clone https://github.com/Microsoft/cpprestsdk.git casablanca
+cd casablanca
+git submodule update --init
+git checkout tags/v2.10.15 -b v2.10.15
+cd Release
+mkdir build.debug
+cd build.debug
+cmake .. -DCMAKE_BUILD_TYPE=Release -DWERROR=OFF -DBUILD_SAMPLES=OFF -DBUILD_TESTS=OFF
+make
+make install
+
+cd $Base_Dir
+## Build and Install Azure/Azure Stack C++ Storage Layer
+git clone https://github.com/Azure/azure-storage-cpp.git
+cd azure-storage-cpp
+git checkout tags/v7.3.1 -b v7.3.1
+cd Microsoft.WindowsAzure.Storage
+mkdir build.release
+cd build.release
+cmake .. -DCMAKE_CXX_COMPILER=/root/GCC-5.1.0/bin/g++ -DCMAKE_BUILD_TYPE=Release
+make
+sudo make install  
+
+cd $Base_Dir
+## jansson
+wget https://rpmfind.net/linux/centos/7.8.2003/os/x86_64/Packages/jansson-devel-2.10-1.el7.x86_64.rpm
+rpm -iv jansson-devel-2.10-1.el7.x86_64.rpm
+
+## 
+curl yum install curl-devel
+
+#To build sample code :
+vi ../samples/SamplesCommon/samples_common.h # modify connection string to include your storage account credentials
+CXX=g++-5.1 
+cmake .. -DCMAKE_CXX_COMPILER=/root/GCC-5.1.0/bin/g++ -DCMAKE_BUILD_TYPE=Release -DBUILD_SAMPLES=ON -DCATCH2_INCLUDE_DIR=/root/tpip/catch.hpp
+make
+
+</pre>
+</div>
+
+</body>
+</html>

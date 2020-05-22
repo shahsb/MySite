@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>SBS</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+<nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="index.html">SBS</a>
+    </div>
+    <ul class="nav navbar-nav">
+      <!--<li class="active"><a href="#">Azure Stack</a></li> -->
+	  <li class="dropdown"><a class="dropdown-toggle" data-toggle="dropdown" href="#">Azure Stack <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          <li><a href="ASDKSetupCreation.html">ASDK setup creation</a></li>
+          <li><a href="ASDKConnect.html">Connect to ASDK via VPN</a></li>
+          <li><a href="AzureClientLibrary.html">Azure storage client library for c++</a></li>
+        </ul>
+      </li>
+      <li class="dropdown"><a class="dropdown-toggle" data-toggle="dropdown" href="#">GCC-G++ <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          <li><a href="#">Upgrade/Install GCC-G++ compiler</a></li>
+          <li><a href="#">Page 1-2</a></li>
+          <li><a href="#">Page 1-3</a></li>
+        </ul>
+      </li>
+      <li><a href="#">Page 2</a></li>
+      <li><a href="#">Page 3</a></li>
+    </ul>
+  </div>
+</nav>
+  
+<div class="container">
+  <h2>Connect to ASDK via VPN</h2>
+  <pre>
+  How To connect to ASDK using VPN :
+Prerequisites:
+1.	PowerShell version 5.1 on windows platform.:
+Refer to this Doc if your client does not have required version:
+https://docs.microsoft.com/en-us/powershell/scripting/wmf/setup/install-configure?view=powershell-7
+
+High level steps:
+1.	Install Azure Stack-compatible Azure PowerShell on your local computer.
+2.	Download the tools required to work with Azure Stack.
+3.	Setup VPN connectivity
+4.	Connect to ASDK 
+5.	Test VPN connectivity with ASDK
+Detailed steps:
+1.	Install Azure PowerShell :
+Run the following PowerShell script to install these modules on your ASDK installation:
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+
+Get-Module -Name Azs.* -ListAvailable | Uninstall-Module -Force -Verbose
+Get-Module -Name Azure* -ListAvailable | Uninstall-Module -Force -Verbose
+
+# Install the AzureRM.BootStrapper module. Select Yes when prompted to install NuGet
+Install-Module -Name AzureRM.BootStrapper
+
+# Install and import the API Version Profile required by Azure Stack into the current PowerShell session.
+Use-AzureRmProfile -Profile 2019-03-01-hybrid -Force
+Install-Module -Name AzureStack -RequiredVersion 1.8.0 
+
+
+2.	Download the tools requires to work with Azure Stack :
+
+To obtain these tools, clone the GitHub repository or download the AzureStack-Tools folder by running the following PowerShell script:
+
+# Change directory to the root directory.
+cd \
+
+# Enforce usage of TLSv1.2 to download the Azure Stack tools archive from GitHub
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+Invoke-WebRequest `
+  -Uri https://github.com/Azure/AzureStack-Tools/archive/master.zip `
+  -OutFile master.zip
+
+# Expand the downloaded files.
+Expand-Archive -Path master.zip -DestinationPath . -Force
+
+# Change to the tools directory.
+cd AzureStack-Tools-master 
+
+
+3.	Setup the VPN connectivity :
+
+Before you start the script, open Control Panel | Administrative Tools | Services and find Windows RM service – start it and set it to automatic (delayed) start
+And then run the following PowerShell Script :
+
+# Change directories to the default Azure Stack tools directory
+cd C:\AzureStack-Tools-master
+
+# Configure Windows Remote Management (WinRM), if it's not already configured.
+winrm quickconfig  
+
+Set-ExecutionPolicy RemoteSigned
+
+# Import the Connect module.
+Import-Module .\Connect\AzureStack.Connect.psm1
+
+# Add the ASDK host computer's IP address as the ASDK certificate authority (CA) to the list of trusted hosts. Make sure you update the IP address and password values for your environment.
+
+$hostIP = ""
+
+$Password = ConvertTo-SecureString `
+  "Gyp.s8m@123" `
+  -AsPlainText `
+  -Force
+
+Set-Item wsman:\localhost\Client\TrustedHosts `
+  -Value $hostIP `
+  -Concatenate
+
+# Create a VPN connection entry for the local user.
+Add-AzsVpnConnection `
+  -ServerAddress $hostIP `
+  -Password $Password
+
+
+4.	Connect to ASDK :
+
+Run this PowerShell Command:
+Connect-AzsVpn `
+  -Password $Password
+
+You should be prompted for password(Gyp.s8m@123), and domain (AZURESTACK) and username (Azurestackadmin).
+You will be also prompted to accept certificates with this connection. Accept the certificates.
+
+5.	Test VPN connectivity with ASDK:
+
+To test the portal connection, open a browser, and then go to either the user portal at https://portal.local.azurestack.external/ or the administrator portal https://adminportal.local.azurestack.external/.
+
+</pre>
+</div>
+
+</body>
+</html>
